@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup</title>
+    <title>Login</title>
 </head>
 
 <body style="margin: 0; padding: 0;">
@@ -12,27 +12,19 @@
     <div style="display: flex; height: 100vh; overflow: hidden;">
         <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
             <form action="" style="display: flex; flex-direction: column; gap: 10px; width: 60%;"
-                onsubmit="formsignupHandler(event)">
-                <h1 style="text-align: center;">Sign Up</h1>
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label for="">Name : </label>
-                    <input style="flex:1; line-height: 2;" type="text" name="" id="namesignup">
-                </div>
+                onsubmit="formloginHandler(event)">
+                <h1 style="text-align: center;">Login</h1>
                 <div style="display: flex; flex-direction: column; gap: 5px;">
                     <label for="">Email : </label>
-                    <input style="flex:1; line-height: 2;" type="email" name="" id="emailsignup">
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label for="">Phone No : </label>
-                    <input style="flex:1; line-height: 2;" type="number" name="" id="phsignup">
+                    <input style="flex:1; line-height: 2;" type="email" name="" id="emaillogin">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 5px;">
                     <label for="">Password : </label>
-                    <input style="flex:1; line-height: 2;" type="password" name="" id="pwsignup">
+                    <input style="flex:1; line-height: 2;" type="password" name="" id="pwlogin">
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <p>Already Have an account <a href="/login">Login</a></p>
-                    <button type="submit" style="padding: 5px;">Sign Up</button>
+                    <p>Don't Have an account <a href="/">Signup</a></p>
+                    <button type="submit" style="padding: 5px;">Login</button>
                 </div>
             </form>
         </div>
@@ -47,18 +39,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
 
     <script>
-        const name = document.getElementById('namesignup')
-        const email = document.getElementById('emailsignup')
-        const password = document.getElementById('pwsignup')
-        const phonenumber = document.getElementById('phsignup')
+        const email = document.getElementById('emaillogin')
+        const password = document.getElementById('pwlogin')
 
-        const formsignupHandler = async (e) => {
+        const formloginHandler = async (e) => {
             e.preventDefault();
             try {
-                const result = await axios.post(`/user/signup`, {
-                    name: name.value,
+                const result = await axios.post(`/user/login`, {
                     email: email.value,
-                    phonenumber: phonenumber.value,
                     password: password.value
                 })
                 if (result) {
