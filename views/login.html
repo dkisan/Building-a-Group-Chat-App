@@ -50,7 +50,10 @@
                     password: password.value
                 })
                 if (result) {
+                    localStorage.setItem('chatuid',result.data.userid)
+                    localStorage.setItem('chatuname',result.data.name)
                     alert(result.data.message)
+                    window.location.href = '/chatapp'
                 }
             } catch (err) {
                 alert('Some Error Ocuured')

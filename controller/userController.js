@@ -13,6 +13,10 @@ exports.getLogin = (req, res, next) => {
     res.sendFile(path.join(__dirname, '../views/', 'login.html'))
 }
 
+exports.getChatapp = (req, res, next) => {
+    res.sendFile(path.join(__dirname, '../views/', 'chatwindow.html'))
+}
+
 
 exports.postSignup = async (req, res, next) => {
     const { name, email, phonenumber, password } = req.body
@@ -57,7 +61,7 @@ exports.postLogin = async (req, res, next) => {
             bcrypt.compare(password, user.password, (err, result) => {
                 if (result) {
                     var token = jwt.sign(user.id, process.env.pvtkey)
-                    return res.status(200).json({ message: "User Login Successfully", userid: token })
+                    return res.status(200).json({ message: "User Login Successfully", userid: token, name: user.name })
                 } else {
                     return res.status(200).json({ message: "Incorrect Credentials" })
                 }

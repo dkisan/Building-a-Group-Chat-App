@@ -3,6 +3,7 @@ const router = express.Router()
 
 const userController = require('../controller/userController')
 
+router.get('/chatapp',userController.getChatapp)
 router.get('/login',userController.getLogin)
 router.get('/',userController.getHome)
 
