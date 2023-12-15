@@ -30,7 +30,7 @@ exports.postSignup = async (req, res, next) => {
             })
             return res.status(201).json({ message: 'User Created successfully' })
         } else {
-            return res.status(200).json({ message: 'User Already Exist' })
+            return res.status(200).json({ message: 'User Already Exist Please Login' })
         }
     } catch (err) {
         return res.status(500).json({ message: 'Some Error Occured' })
