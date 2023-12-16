@@ -8,13 +8,15 @@
 </head>
 
 <body style="margin: 0; padding: 0;">
-    <h1 style="text-align: center;">ChatApp</h1>
-    <ul style="list-style-type: none;" id="chatid">
-    </ul>
-    <div
-        style="display: flex; background-color: blue; padding-top: 10px; padding-bottom: 10px; position: absolute; bottom: 0; width: 100vw; justify-content: center; align-items: center;">
-        <input style="line-height: 2; width: 50vw;" type="text" name="" id="allchatid">
-        <button style="line-height: 2;" onclick="allchatHandler(event)">Send</button>
+    <div style="display: flex; flex-direction: column;">
+        <h1 style="text-align: center;">ChatApp</h1>
+        <ul style="list-style-type: none; margin-bottom: 7vh;" id="chatid">
+        </ul>
+        <div
+            style="display: flex; background-color: blue; padding-top: 10px; padding-bottom: 10px; position: fixed; bottom: 0; width: 100vw; justify-content: center; align-items: center; overflow: hidden;">
+            <input style="line-height: 2; width: 50vw;" type="text" name="" id="allchatid">
+            <button style="line-height: 2;" onclick="allchatHandler(event)">Send</button>
+        </div>
     </div>
 
 
@@ -25,23 +27,27 @@
         const allchat = document.getElementById('allchatid')
 
         document.addEventListener('DOMContentLoaded', async () => {
-            if(! localStorage.getItem('chatuid')) window.location.href = '/'
+            if (!localStorage.getItem('chatuid')) window.location.href = '/'
             // const uname = localStorage.getItem('chatuname')
 
             try {
+                setInterval(async () => {
+                    const allchats = await axios.get('/chat/getallchats')
+                    while (chatid.firstChild) {
+                        chatid.removeChild(chatid.firstChild)
+                    }
 
-                const allchats = await axios.get('/chat/getallchats')
-
-                allchats.data.map(e=>{
-                    return createChatList(e.user.name,e.message)
-                })
+                    allchats.data.map(e => {
+                        return createChatList(e.user.name, e.message)
+                    })
+                }, 1000)
 
                 const result = await axios.post(`/chat/allchat`, {
                     message: `has joined`,
                     uid: localStorage.getItem('chatuid')
                 })
                 if (result) {
-                    createChatList(result.data.name,result.data.message)
+                    createChatList(result.data.name, result.data.message)
                 }
             } catch (err) {
                 console.log(err.message)
@@ -49,7 +55,7 @@
             }
         })
 
-        function createChatList(name,msg){
+        function createChatList(name, msg) {
             const li = document.createElement('li')
             li.appendChild(document.createTextNode(`${name} : ${msg}`))
             chatid.appendChild(li)
@@ -57,7 +63,7 @@
 
         async function allchatHandler(e) {
             e.preventDefault();
-            if(allchat.value == ''){
+            if (allchat.value == '') {
                 alert('Please write something')
                 return
             }
@@ -67,7 +73,7 @@
                     uid: localStorage.getItem('chatuid')
                 })
                 if (result) {
-                    createChatList(result.data.name,result.data.message)
+                    createChatList(result.data.name, result.data.message)
                 }
             } catch (err) {
                 alert('Some Error Ocuured')
