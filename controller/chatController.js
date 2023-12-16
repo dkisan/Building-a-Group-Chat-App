@@ -1,7 +1,6 @@
 const User = require("../model/userModel")
 const Allchats = require("../model/allchats")
 const jwt = require('jsonwebtoken')
-const { where } = require("sequelize")
 
 exports.getAllchats = async (req, res, next) => {
     try {
@@ -10,7 +9,9 @@ exports.getAllchats = async (req, res, next) => {
             include: [{
                 model: User,
                 attributes: ['name']
-            }]
+            }],
+            order:[['id','DESC']],
+            limit:10
         })
         res.status(200).json(allchats)
     } catch (err) {

@@ -29,6 +29,12 @@
         document.addEventListener('DOMContentLoaded', async () => {
             if (!localStorage.getItem('chatuid')) window.location.href = '/'
             // const uname = localStorage.getItem('chatuname')
+            if (localStorage.getItem('chatHistory')) {
+                const chats = JSON.parse(localStorage.getItem('chatHistory'))
+                chats.map(e => {
+                    createChatList(e.user.name, e.message)
+                })
+            }
 
             try {
                 setInterval(async () => {
@@ -37,9 +43,10 @@
                         chatid.removeChild(chatid.firstChild)
                     }
 
-                    allchats.data.map(e => {
+                    allchats.data.reverse().map(e => {
                         return createChatList(e.user.name, e.message)
                     })
+                    localStorage.setItem('chatHistory', JSON.stringify(allchats.data))
                 }, 1000)
 
                 const result = await axios.post(`/chat/allchat`, {
@@ -73,6 +80,7 @@
                     uid: localStorage.getItem('chatuid')
                 })
                 if (result) {
+                    allchat.value = ''
                     createChatList(result.data.name, result.data.message)
                 }
             } catch (err) {
