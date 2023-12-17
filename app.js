@@ -15,9 +15,22 @@ const chatRoute = require('./routes/chatRoute')
 
 const user = require('./model/userModel')
 const allchat = require('./model/allchats')
+const chatgroup = require('./model/chatGroup')
+const groupmember = require('./model/groupmember')
+const groupchat = require('./model/grpchats')
 
 user.hasMany(allchat)
 allchat.belongsTo(user)
+
+chatgroup.hasMany(groupchat)
+user.hasMany(groupchat)
+groupchat.belongsTo(user)
+groupchat.belongsTo(chatgroup)
+
+user.belongsToMany(chatgroup, { through: groupmember })
+chatgroup.belongsToMany(user, { through: groupmember })
+
+
 
 app.use(bodyParser.json())
 
@@ -34,6 +47,10 @@ sequelize.sync()
 
         app.listen(3000)
     })
-    .catch(err=>{
+    .then(() => {
+
+        console.log('server started')
+    })
+    .catch(err => {
         console.log(err.message)
     })
