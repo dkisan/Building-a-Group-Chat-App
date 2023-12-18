@@ -13,6 +13,10 @@
 </head>
 
 <body style="margin: 0; padding: 0;">
+    <div style="display: flex; align-items: center; gap: 5px; position: fixed; right: 15px; top: 15px;">
+        <p id="logusername"></p>
+        <button onclick="logoutHandler()" style="height: max-content; cursor: pointer;">Logout</button>
+    </div>
 
     <div style="display: flex; flex-direction: column; flex: 1;">
         <h1 style="text-align: center; text-decoration: underline;" id="chatwindowname">All Chat</h1>
@@ -29,6 +33,10 @@
             </div>
             <ul style="flex: 1; list-style-type: none; margin-bottom: 7vh; border-right: 1px solid black;" id="chatid">
             </ul>
+            <div style="padding: 10px; display: none;" id="grpmemsection">
+                <h5 style="text-align: center;">Group Members</h5>
+                <ul style="list-style-type: none; height: 40vh; overflow: auto;" id="grpmemlist"></ul>
+            </div>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
             <button
@@ -36,7 +44,9 @@
                 id="addbtn">Add
                 People to Group</button>
             <div id="addtogrp" style="display: none; align-items: center; gap: 15px;">
-                <ul style="list-style-type: none; display: flex; flex-direction: column; gap: 10px;width: 30vh; height: 30vh; overflow-y: auto;"
+                <input style="width: 20vw;" placeholder="Search User" onkeyup="searchUserHandler(event)" type="text"
+                    name="" id="">
+                <ul style="list-style-type: none; display: flex; flex-direction: column; align-items: center; gap: 10px;width: 30vh; height: 30vh; overflow-y: auto;"
                     id="alluserlist"></ul>
             </div>
         </div>
@@ -59,6 +69,24 @@
 
         let intval;
 
+        function logoutHandler() {
+            localStorage.removeItem('chatuid')
+            window.location.href = '/login'
+        }
+
+        function searchUserHandler(e) {
+            const stext = e.target.value.toLowerCase()
+            const uslist = document.querySelectorAll('#alluserlist li')
+            for (let i of uslist) {
+                const v = i.textContent.toLowerCase().split(' ')[0]
+                if (v.indexOf(stext) == -1) {
+                    i.style.display = 'none'
+                } else {
+                    i.style.display = 'block'
+                }
+            }
+        }
+
         document.getElementById('addbtn').addEventListener('click', async () => {
             groupform.style.display = 'none'
             document.getElementById('addtogrp').style.display = 'flex'
@@ -76,12 +104,69 @@
 
         })
 
+        async function getGroupMember(id) {
+            const grpmembers = await await axios.get(`/chat/group/getmember/${id}`)
+            while (document.getElementById('grpmemlist').firstChild) {
+                document.getElementById('grpmemlist').removeChild(document.getElementById('grpmemlist').firstChild)
+            }
+            grpmembers.data.map(e => {
+                const li = document.createElement('li')
+                li.appendChild(document.createTextNode(e.name))
+                li.setAttribute('id', e.email)
+                li.style.marginBottom = '5px'
+                const adminbtn = document.createElement('button')
+                adminbtn.appendChild(document.createTextNode('Make Admin'))
+                adminbtn.setAttribute('onclick', 'makeAdminHandler(event)')
+                adminbtn.style.marginLeft = '10px'
+                li.appendChild(adminbtn)
+
+                const removebtn = document.createElement('button')
+                removebtn.appendChild(document.createTextNode('Remove'))
+                removebtn.setAttribute('onclick', 'removeGroupHandler(event)')
+                removebtn.style.marginLeft = '10px'
+                li.appendChild(removebtn)
+
+                document.getElementById('grpmemlist').appendChild(li)
+            })
+        }
+
+        async function removeGroupHandler(e) {
+            const rmvemail = e.target.parentElement.getAttribute('id')
+            const isremoved = await axios.post(`/chat/group/remove`, {
+                grpid: localStorage.getItem('chatgrpid'),
+                pplid: rmvemail,
+                uid: localStorage.getItem('chatuid')
+            })
+            if (isremoved.status == 200) {
+                alert(isremoved.data.message)
+                document.getElementById('grpmemlist').removeChild(e.target.parentElement)
+            }else{
+                alert('some error occured')
+            }
+        }
+
+
+        async function makeAdminHandler(e) {
+            const uemail = e.target.parentElement.getAttribute('id')
+            const isadmin = await axios.post(`/chat/group/makeadmin`, {
+                grpid: localStorage.getItem('chatgrpid'),
+                pplid: uemail,
+                uid: localStorage.getItem('chatuid')
+            })
+            alert(isadmin.data.message)
+        }
+
         function showUsers(name, email) {
             const li = document.createElement('li')
             li.appendChild(document.createTextNode(`${name}`))
             li.setAttribute('id', email)
+            // const btn1 = document.createElement('button')
+            // btn1.appendChild(document.createTextNode('Make Admin'))
+            // btn1.setAttribute('onclick', 'makeAdminHandler(event)')
+            // btn1.style.marginLeft = '10px'
+            // li.appendChild(btn1)
             const btn = document.createElement('button')
-            btn.appendChild(document.createTextNode('+'))
+            btn.appendChild(document.createTextNode(' Add to Group'))
             btn.setAttribute('onclick', 'addtogroupHandler(event)')
             btn.style.marginLeft = '10px'
             li.appendChild(btn)
@@ -89,6 +174,7 @@
         }
 
         async function addtogroupHandler(e) {
+            const unm = e.target.parentElement.textContent.split(' ')[0]
             const addId = e.target.parentElement.getAttribute('id')
             const isAdded = await axios.post(`/chat/group/addtogroup`, {
                 grpid: localStorage.getItem('chatgrpid'),
@@ -97,6 +183,24 @@
             })
             if (isAdded.status === 200) {
                 alert(isAdded.data.message)
+
+                const li = document.createElement('li')
+                li.appendChild(document.createTextNode(unm))
+                li.setAttribute('id', addId)
+                li.style.marginBottom = '5px'
+                const adminbtn = document.createElement('button')
+                adminbtn.appendChild(document.createTextNode('Make Admin'))
+                adminbtn.setAttribute('onclick', 'makeAdminHandler(event)')
+                adminbtn.style.marginLeft = '10px'
+                li.appendChild(adminbtn)
+
+                const removebtn = document.createElement('button')
+                removebtn.appendChild(document.createTextNode('Remove'))
+                removebtn.setAttribute('onclick', 'removeGroupHandler(event)')
+                removebtn.style.marginLeft = '10px'
+                li.appendChild(removebtn)
+
+                document.getElementById('grpmemlist').appendChild(li)
             } else {
                 alert('some error occured')
             }
@@ -117,6 +221,7 @@
                 alert(`${group.data} created successfully`)
                 groupform.style.display = 'none'
                 groupname.value = ''
+                window.location.reload()
             } else {
                 alert('Some error occured try again')
             }
@@ -127,7 +232,6 @@
             const id = e.target.getAttribute('id')
             groupform.style.display = 'none'
             chatSectionHandler(id, e.target.innerHTML)
-
         }
 
         async function fetchGroups() {
@@ -165,58 +269,65 @@
                     createChatList(e.user.name, e.message)
                 })
             }
+            document.getElementById('logusername').innerHTML = `Welcome ${localStorage.getItem('chatuname').toUpperCase()}`
 
-            localStorage.setItem('chatgrpid', '0')
+            localStorage.setItem('chatgrpid', '-1')
 
-            chatSectionHandler(0, ' All Chat')
+            chatSectionHandler('0', ' All Chat')
 
 
         })
 
         async function chatSectionHandler(grpid, grpname) {
-            if (intval) clearInterval(intval)
             let allchats;
-            try {
-                intval = setInterval(async () => {
-                    allchats = await axios.get(`/chat/${grpid}`, {
-                        headers: {
-                            uid: localStorage.getItem('chatuid')
-                        }
-                    })
-                    localStorage.setItem('chatgrpid', `${grpid}`)
-                    document.getElementById('chatwindowname').innerHTML = grpname
-                    if (grpid != '0') {
-                        document.getElementById('addbtn').style.display = 'block'
-                    }
-                    while (chatid.firstChild) {
-                        chatid.removeChild(chatid.firstChild)
-                    }
-                    if (allchats.data.length > 0) {
-                        allchats.data.reverse().map(e => {
-                            return createChatList(e.user.name, e.message)
+            if (grpid != localStorage.getItem('chatgrpid')) {
+                if (intval) clearInterval(intval)
+                try {
+                    intval = setInterval(async () => {
+                        allchats = await axios.get(`/chat/${grpid}`, {
+                            headers: {
+                                uid: localStorage.getItem('chatuid')
+                            }
                         })
-                    }
-                }, 1000)
-                if (grpid == '0') {
-                    if (allchats && allchats.data.length > 0) {
-                        localStorage.setItem('chatHistory', JSON.stringify(allchats.data))
-                    }
-                    const result = await axios.post(`/chat/allchat/0`, {
-                        message: `has joined`,
-                        uid: localStorage.getItem('chatuid')
-                    })
-                    if (result) {
-                        createChatList(result.data.name, result.data.message)
-                    }
+                        localStorage.setItem('chatgrpid', `${grpid}`)
+                        document.getElementById('chatwindowname').innerHTML = grpname
+                        if (grpid != '0') {
+                            document.getElementById('addbtn').style.display = 'block'
+                        }
+                        while (chatid.firstChild) {
+                            chatid.removeChild(chatid.firstChild)
+                        }
+                        if (allchats.data.length > 0) {
+                            allchats.data.reverse().map(e => {
+                                return createChatList(e.user.name, e.message)
+                            })
+                        }
+                    }, 1000)
+                    if (grpid == '0') {
+                        if (allchats && allchats.data.length > 0) {
+                            localStorage.setItem('chatHistory', JSON.stringify(allchats.data))
+                        }
+                        const result = await axios.post(`/chat/allchat/0`, {
+                            message: `has joined`,
+                            uid: localStorage.getItem('chatuid')
+                        })
+                        if (result) {
+                            createChatList(result.data.name, result.data.message)
+                        }
 
-                    document.getElementById('addbtn').style.display = 'none'
+                        document.getElementById('addbtn').style.display = 'none'
+                        document.getElementById('grpmemsection').style.display = 'none'
+
+                    } else {
+                        document.getElementById('grpmemsection').style.display = 'block'
+                        getGroupMember(grpid)
+                    }
+                } catch (err) {
+                    console.log(err)
+                    alert('Some Error Ocuured')
+                    window.location.href = '/login'
 
                 }
-            } catch (err) {
-                console.log(err)
-                alert('Some Error Ocuured')
-                window.location.href = '/login'
-
             }
         }
 

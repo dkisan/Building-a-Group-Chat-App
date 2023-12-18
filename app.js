@@ -18,6 +18,7 @@ const allchat = require('./model/allchats')
 const chatgroup = require('./model/chatGroup')
 const groupmember = require('./model/groupmember')
 const groupchat = require('./model/grpchats')
+// const groupadmin = require('./model/groupadmin')
 
 user.hasMany(allchat)
 allchat.belongsTo(user)
@@ -30,6 +31,8 @@ groupchat.belongsTo(chatgroup)
 user.belongsToMany(chatgroup, { through: groupmember })
 chatgroup.belongsToMany(user, { through: groupmember })
 
+// user.belongsToMany(chatgroup,{through: groupadmin})
+// chatgroup.belongsToMany(user,{through: groupadmin})
 
 
 app.use(bodyParser.json())
