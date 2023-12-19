@@ -102,7 +102,6 @@ exports.postCreateGroup = async (req, res, next) => {
         await t.commit()
         res.status(200).json(gname.groupname)
     } catch (err) {
-        console.log('hi', err)
         await t.rollback()
         res.status(500).json({ message: 'some error occured' })
     }
@@ -238,7 +237,7 @@ exports.postMakeadmin = async (req, res, next) => {
                     email: pplid
                 }
             })
-            if (admins.indexOf(ppl.id)) {
+            if (admins.indexOf(`${ppl.id}`) >= 0) {
                 res.status(200).json({ message: 'Already admin of this Group' })
             } else {
                 admins.push(`${ppl.id}`)
@@ -285,17 +284,27 @@ exports.postRemoveFromGroup = async (req, res, next) => {
                         email: pplid
                     }
                 })
+                const chtgrp = await chatgroup.findOne({
+                    where: {
+                        id: +grpid
+                    }
+                })
 
                 if (admins.includes(`${ppl.id}`)) {
-                    admins.push(`${ppl.id}`)
-                    admins = admins.join(',')
-                    await isGrpMember.update({
-                        admins: `${admins}`
-                    },
-                        { transaction: t })
-                }
-                const a = await ppl.removeChatgroup(isGrpMember,{transaction:t})
+                    const a = admins.filter(item => item != `${ppl.id}`)
+                    admins = a.join(',')
 
+                    if (admins.length > 0) {
+                        await chtgrp.update({
+                            admins: `${admins}`
+                        },
+                            { transaction: t })
+                    }
+                }
+                const a = await ppl.removeChatgroup(isGrpMember, { transaction: t })
+                if (admins.length == 0) {
+                    await chtgrp.destroy({ transaction: t })
+                }
                 if (a) {
                     await t.commit()
                     res.status(200).json({ message: 'Removed From Group Successfully' })

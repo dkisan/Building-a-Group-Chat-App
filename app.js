@@ -3,10 +3,12 @@ const bodyParser = require('body-parser')
 const dotenv = require('dotenv')
 const cors = require('cors')
 
+const { Server } = require('socket.io')
 
 dotenv.config()
 
 const app = express()
+
 
 const sequelize = require('./database/database')
 
@@ -41,14 +43,32 @@ app.use(cors({
     origin: '*'
 }))
 
+
 app.use('/chat', chatRoute)
 app.use('/', userRoute)
+
+
 
 // sequelize.sync({force:true})
 sequelize.sync()
     .then(() => {
 
-        app.listen(3000)
+        const server = app.listen(3000)
+
+        const io = new Server(server);
+
+        io.on('connection', (socket) => {
+            // console.log('a user connected');
+            // socket.on('disconnect', () => {
+            // console.log('user disconnected');
+            // });
+
+
+            socket.on('chatmsg', (name, msg, grp) => {
+                socket.broadcast.emit('chatmsg', { name: name, msg: msg,grp:grp })
+            })
+        });
+
     })
     .then(() => {
 

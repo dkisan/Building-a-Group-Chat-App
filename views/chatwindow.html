@@ -57,6 +57,15 @@
         </div>
     </div>
 
+    <!-- <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+    </script> -->
+
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
 
@@ -66,6 +75,17 @@
         const groupform = document.getElementById('groupid')
         const groupname = document.getElementById('groupnameid')
         const grplist = document.getElementById('grplist')
+
+        const socket = io();
+
+        socket.on('chatmsg', msg => {
+            if (localStorage.getItem('chatgrpid') === msg.grp) {
+                if (chatid.children.length >= 10) {
+                    chatid.removeChild(chatid.firstChild)
+                }
+                createChatList(msg.name, msg.msg)
+            }
+        })
 
         let intval;
 
@@ -139,8 +159,10 @@
             })
             if (isremoved.status == 200) {
                 alert(isremoved.data.message)
-                document.getElementById('grpmemlist').removeChild(e.target.parentElement)
-            }else{
+                if (isremoved.data.message == 'Removed From Group Successfully') {
+                    document.getElementById('grpmemlist').removeChild(e.target.parentElement)
+                }
+            } else {
                 alert('some error occured')
             }
         }
@@ -283,26 +305,27 @@
             if (grpid != localStorage.getItem('chatgrpid')) {
                 if (intval) clearInterval(intval)
                 try {
-                    intval = setInterval(async () => {
-                        allchats = await axios.get(`/chat/${grpid}`, {
-                            headers: {
-                                uid: localStorage.getItem('chatuid')
-                            }
+                    // intval = setInterval(async () => {
+
+                    allchats = await axios.get(`/chat/${grpid}`, {
+                        headers: {
+                            uid: localStorage.getItem('chatuid')
+                        }
+                    })
+                    localStorage.setItem('chatgrpid', `${grpid}`)
+                    document.getElementById('chatwindowname').innerHTML = grpname
+                    if (grpid != '0') {
+                        document.getElementById('addbtn').style.display = 'block'
+                    }
+                    while (chatid.firstChild) {
+                        chatid.removeChild(chatid.firstChild)
+                    }
+                    if (allchats.data.length > 0) {
+                        allchats.data.reverse().map(e => {
+                            return createChatList(e.user.name, e.message)
                         })
-                        localStorage.setItem('chatgrpid', `${grpid}`)
-                        document.getElementById('chatwindowname').innerHTML = grpname
-                        if (grpid != '0') {
-                            document.getElementById('addbtn').style.display = 'block'
-                        }
-                        while (chatid.firstChild) {
-                            chatid.removeChild(chatid.firstChild)
-                        }
-                        if (allchats.data.length > 0) {
-                            allchats.data.reverse().map(e => {
-                                return createChatList(e.user.name, e.message)
-                            })
-                        }
-                    }, 1000)
+                    }
+                    // }, 1000)
                     if (grpid == '0') {
                         if (allchats && allchats.data.length > 0) {
                             localStorage.setItem('chatHistory', JSON.stringify(allchats.data))
@@ -312,6 +335,8 @@
                             uid: localStorage.getItem('chatuid')
                         })
                         if (result) {
+                            socket.emit('chatmsg', result.data.name, result.data.message, grpid)
+
                             createChatList(result.data.name, result.data.message)
                         }
 
@@ -335,6 +360,9 @@
             const li = document.createElement('li')
             li.appendChild(document.createTextNode(`${name} : ${msg}`))
             li.setAttribute('class', 'lst')
+            if (chatid.children.length >= 10) {
+                chatid.removeChild(chatid.firstChild)
+            }
             chatid.appendChild(li)
         }
 
@@ -350,6 +378,8 @@
                     uid: localStorage.getItem('chatuid')
                 })
                 if (result) {
+                    const grp = localStorage.getItem('chatgrpid')
+                    socket.emit('chatmsg', result.data.name, result.data.message, grp)
                     allchat.value = ''
                     createChatList(result.data.name, result.data.message)
                 }
