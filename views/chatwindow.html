@@ -31,7 +31,7 @@
                 <div id="grplist" style="display: flex; flex-direction: column; gap: 1vh;">
                 </div>
             </div>
-            <ul style="flex: 1; list-style-type: none; margin-bottom: 7vh; border-right: 1px solid black;" id="chatid">
+            <ul style="flex: 1; list-style-type: none; margin-bottom: 7vh; border-right: 1px solid black;  height: 80vh; overflow: auto;" id="chatid">
             </ul>
             <div style="padding: 10px; display: none;" id="grpmemsection">
                 <h5 style="text-align: center;">Group Members</h5>
@@ -50,10 +50,14 @@
                     id="alluserlist"></ul>
             </div>
         </div>
+        <img src="" id="selectedimgid" alt="">
         <div
             style="display: flex; background-color: blue; padding-top: 10px; padding-bottom: 10px; position: fixed; bottom: 0; width: 100vw; justify-content: center; align-items: center; overflow: hidden;">
             <input style="line-height: 2; width: 50vw;" type="text" name="" id="allchatid">
             <button style="line-height: 2;" onclick="allchatHandler(event)">Send</button>
+            <form id="formid" action="#" enctype="multipart/form-data" method="POST">
+                <input type="file" name="images" id="fileid">
+            </form>
         </div>
     </div>
 
@@ -75,6 +79,21 @@
         const groupform = document.getElementById('groupid')
         const groupname = document.getElementById('groupnameid')
         const grplist = document.getElementById('grplist')
+
+        document.getElementById('fileid').addEventListener('change', async (e) => {
+            const file = e.target.files[0]
+            const formdata = new FormData()
+            formdata.append('images', file)
+            const grpid = localStorage.getItem('chatgrpid')
+            const uid = localStorage.getItem('chatuid')
+
+            const response = await axios.post(`/chat/group/uploadimg/${grpid}/${uid}`, formdata)
+            socket.emit('chatmsg', response.data.name, response.data.message, grpid)
+            createChatList(response.data.name, response.data.message)
+
+        })
+
+
 
         const socket = io();
 
@@ -357,13 +376,26 @@
         }
 
         function createChatList(name, msg) {
-            const li = document.createElement('li')
-            li.appendChild(document.createTextNode(`${name} : ${msg}`))
-            li.setAttribute('class', 'lst')
-            if (chatid.children.length >= 10) {
-                chatid.removeChild(chatid.firstChild)
+            if (msg.includes('s3.amazonaws.com')) {
+                const li = document.createElement('li')
+                li.appendChild(document.createTextNode(`${name} : `))
+                const img = document.createElement('img')
+                img.style.width = '20vw'
+                img.src = msg
+                li.appendChild(img)
+                if (chatid.children.length >= 10) {
+                    chatid.removeChild(chatid.firstChild)
+                }
+                chatid.appendChild(li)
+            } else {
+                const li = document.createElement('li')
+                li.appendChild(document.createTextNode(`${name} : ${msg}`))
+                li.setAttribute('class', 'lst')
+                if (chatid.children.length >= 10) {
+                    chatid.removeChild(chatid.firstChild)
+                }
+                chatid.appendChild(li)
             }
-            chatid.appendChild(li)
         }
 
         async function allchatHandler(e) {

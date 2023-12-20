@@ -5,6 +5,36 @@ const groupchat = require("../model/grpchats");
 const chatgroup = require("../model/chatGroup");
 const groupmember = require("../model/groupmember");
 const sequelize = require("../database/database");
+const AWS = require('aws-sdk')
+
+function uploadToS3(data, filename) {
+    const BUCKET_NAME = process.env.BUCKET_NAME
+    const IAM_USER_KEY = process.env.IAM_USER_KEY
+    const IAM_SECRET_KEY = process.env.IAM_SECRET_KEY
+
+    let s3bucket = new AWS.S3({
+        accessKeyId: IAM_USER_KEY,
+        secretAccessKey: IAM_SECRET_KEY
+    })
+
+    var params = {
+        Bucket: BUCKET_NAME,
+        Key: filename,
+        Body: data,
+        ACL: 'public-read'
+    }
+    return new Promise((resolve, reject) => {
+        s3bucket.upload(params, (err, s3response) => {
+            if (err) {
+                console.log('Something Went Wrong')
+                reject(err)
+            } else {
+                console.log('Success', s3response)
+                resolve(s3response.Location)
+            }
+        })
+    })
+}
 
 exports.getAllchats = async (req, res, next) => {
     try {
@@ -73,6 +103,66 @@ exports.postAllchat = async (req, res, next) => {
         } else {
             t = await user.createGroupchat({
                 message: message,
+                chatgroupId: +grpid
+            })
+        }
+        res.status(201).json({ message: t.message, name: user.name })
+    } catch (err) {
+        console.log(err.message)
+        res.status(500).json({ message: 'some error occured' })
+    }
+}
+
+function uploadToS3(data, filename) {
+    const BUCKET_NAME = process.env.BUCKET_NAME
+    const IAM_USER_KEY = process.env.IAM_USER_KEY
+    const IAM_SECRET_KEY = process.env.IAM_SECRET_KEY
+
+    let s3bucket = new AWS.S3({
+        accessKeyId: IAM_USER_KEY,
+        secretAccessKey: IAM_SECRET_KEY
+    })
+
+    var params = {
+        Bucket: BUCKET_NAME,
+        Key: filename,
+        Body: data,
+        ACL: 'public-read'
+    }
+    return new Promise((resolve, reject) => {
+        s3bucket.upload(params, (err, s3response) => {
+            if (err) {
+                console.log('Something Went Wrong')
+                reject(err)
+            } else {
+                console.log('Success', s3response)
+                resolve(s3response.Location)
+            }
+        })
+    })
+}
+
+exports.postUploadImg = async (req, res, next) => {
+    try {
+        const imageFile = req.file
+        const imageName = `${Date.now()}_${imageFile.originalname}`
+        const fileurl = await uploadToS3(imageFile.buffer, imageName);
+
+        const { grpid, uid } = req.params
+        const userId = jwt.verify(uid, process.env.pvtkey)
+        const user = await User.findOne({
+            where: {
+                id: userId
+            }
+        })
+        let t;
+        if (grpid == '0') {
+            t = await user.createAllchat({
+                message: fileurl
+            })
+        } else {
+            t = await user.createGroupchat({
+                message: fileurl,
                 chatgroupId: +grpid
             })
         }

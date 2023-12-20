@@ -33,9 +33,6 @@ groupchat.belongsTo(chatgroup)
 user.belongsToMany(chatgroup, { through: groupmember })
 chatgroup.belongsToMany(user, { through: groupmember })
 
-// user.belongsToMany(chatgroup,{through: groupadmin})
-// chatgroup.belongsToMany(user,{through: groupadmin})
-
 
 app.use(bodyParser.json())
 
