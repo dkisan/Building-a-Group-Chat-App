@@ -3,6 +3,8 @@ const bodyParser = require('body-parser')
 const dotenv = require('dotenv')
 const cors = require('cors')
 
+const { CronJob } = require('cron');
+
 const { Server } = require('socket.io')
 
 dotenv.config()
@@ -21,6 +23,43 @@ const chatgroup = require('./model/chatGroup')
 const groupmember = require('./model/groupmember')
 const groupchat = require('./model/grpchats')
 // const groupadmin = require('./model/groupadmin')
+
+const { Op } = require('sequelize');
+const archievedChat = require('./model/archievedChats');
+
+const job = new CronJob(
+    '* * * * *', // cronTime
+    // '0 0 * * *', // cronTime
+    async function () {
+        try {
+            const dt = new Date()
+            const archvRecords = await allchat.findAll({
+                where: {
+                    createdAt: {
+                        [Op.lt]: dt.setDate(dt.getDate() - 1)
+                    }
+                }
+            })
+            if(archvRecords.length > 0){
+                archvRecords.map(async rowData => {
+                    await archievedChat.create({
+                        id: rowData.id,
+                        message: rowData.message,
+                        userId: rowData.userId
+                    })
+                    await rowData.destroy()
+                })
+    F        }
+        } catch (err) {
+            console.log(err.message)
+        }
+    
+    }, // onTick
+    null, // onComplete
+    true, // start
+    'America/Los_Angeles' // timeZone
+);
+
 
 user.hasMany(allchat)
 allchat.belongsTo(user)
@@ -62,7 +101,7 @@ sequelize.sync()
 
 
             socket.on('chatmsg', (name, msg, grp) => {
-                socket.broadcast.emit('chatmsg', { name: name, msg: msg,grp:grp })
+                socket.broadcast.emit('chatmsg', { name: name, msg: msg, grp: grp })
             })
         });
 
